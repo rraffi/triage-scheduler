@@ -1,2 +1,2 @@
 # triage-scheduler
-Triage Scheduler
+Triage Scheduler - a triage scheduler for triaging of triage tasks.
