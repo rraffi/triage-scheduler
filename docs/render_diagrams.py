@@ -89,7 +89,8 @@ def diagram_1_ring():
 
     # Legend
     ax.text(0, -2.2, 'Each pointer advances independently through the ring.\n'
-            'Pointer A tracks last App A assignee. Pointer B tracks last App B assignee.',
+            'Pointer A tracks last App A assignee. Pointer B tracks last App B assignee.\n'
+            'KEY RULE: Vacation skips do NOT advance the pointer. Cool-down skips DO.',
             ha='center', va='center', fontsize=10, style='italic', color='#555')
 
     fig.tight_layout()
@@ -231,10 +232,10 @@ def diagram_3_algorithm_flowchart():
     draw_arrow(6, 16.45, 6, 16.25)
 
     # No - unavailable
-    draw_box(9.5, 15.7, 2.2, 0.6, 'SKIP\n(on vacation)', '#fce4e4', RED, fontsize=8)
-    draw_arrow(7.8, 15.7, 8.4, 15.7, 'No', RED)
-    draw_arrow(9.5, 15.1, 6, 15.1)  # loop back - goes down then left
-    ax.annotate('', xy=(6, 15.2), xytext=(6, 15.1),
+    draw_box(9.5, 15.7, 2.8, 0.7, 'SKIP (vacation)\nPointer does NOT advance', '#fce4e4', RED, fontsize=8)
+    draw_arrow(7.8, 15.7, 8.1, 15.7, 'No', RED)
+    draw_arrow(9.5, 15.05, 6, 15.05)  # loop back - goes down then left
+    ax.annotate('', xy=(6, 15.15), xytext=(6, 15.05),
                 arrowprops=dict(arrowstyle='->', color='#555', lw=1.2))
 
     # Yes - check cooldown
@@ -242,11 +243,12 @@ def diagram_3_algorithm_flowchart():
     draw_arrow(6, 15.15, 6, 14.75, 'Yes')
 
     # Cooldown violation
-    draw_box(9.5, 14.2, 2.2, 0.6, 'SKIP\n(cool-down)', '#fce4e4', RED, fontsize=8)
-    draw_arrow(7.8, 14.2, 8.4, 14.2, 'Yes', RED)
+    draw_box(9.5, 14.2, 2.8, 0.7, 'SKIP (cool-down)\nPointer DOES advance', '#fce4e4', RED, fontsize=8)
+    draw_arrow(7.8, 14.2, 8.1, 14.2, 'Yes', RED)
 
     # Assign App A
-    draw_box(6, 13, 3.5, 0.7, 'ASSIGN TO APP A\nUpdate pointer_a', LIGHT_BLUE, BLUE, bold=True)
+    draw_box(6, 13, 4.5, 0.8, 'ASSIGN TO APP A\nAdvance pointer_a (unless vacation\nsubstitute — then pointer holds)',
+             LIGHT_BLUE, BLUE, bold=True)
     draw_arrow(6, 13.65, 6, 13.35, 'No')
 
     # Separator
@@ -262,15 +264,15 @@ def diagram_3_algorithm_flowchart():
     draw_diamond(6, 10.4, 3.6, 1.1, 'Member\navailable?')
     draw_arrow(6, 11.15, 6, 10.95)
 
-    draw_box(9.5, 10.4, 2.2, 0.6, 'SKIP\n(on vacation)', '#fce4e4', RED, fontsize=8)
-    draw_arrow(7.8, 10.4, 8.4, 10.4, 'No', RED)
+    draw_box(9.5, 10.4, 2.8, 0.7, 'SKIP (vacation)\nPointer does NOT advance', '#fce4e4', RED, fontsize=8)
+    draw_arrow(7.8, 10.4, 8.1, 10.4, 'No', RED)
 
     # Check cooldown B
     draw_diamond(6, 9.0, 3.6, 1.1, 'Did App A\nlast week?')
     draw_arrow(6, 9.85, 6, 9.55, 'Yes')
 
-    draw_box(9.5, 9.0, 2.2, 0.6, 'SKIP\n(cool-down)', '#fce4e4', RED, fontsize=8)
-    draw_arrow(7.8, 9.0, 8.4, 9.0, 'Yes', RED)
+    draw_box(9.5, 9.0, 2.8, 0.7, 'SKIP (cool-down)\nPointer DOES advance', '#fce4e4', RED, fontsize=8)
+    draw_arrow(7.8, 9.0, 8.1, 9.0, 'Yes', RED)
 
     # Check same person
     draw_diamond(6, 7.6, 3.6, 1.1, 'Same as\nApp A\nthis week?')
@@ -280,7 +282,8 @@ def diagram_3_algorithm_flowchart():
     draw_arrow(7.8, 7.6, 8.4, 7.6, 'Yes', RED)
 
     # Assign App B
-    draw_box(6, 6.4, 3.5, 0.7, 'ASSIGN TO APP B\nUpdate pointer_b', LIGHT_ORANGE, ORANGE, bold=True)
+    draw_box(6, 6.4, 4.5, 0.8, 'ASSIGN TO APP B\nAdvance pointer_b (unless vacation\nsubstitute — then pointer holds)',
+             LIGHT_ORANGE, ORANGE, bold=True)
     draw_arrow(6, 7.05, 6, 6.75, 'No')
 
     # Done
@@ -382,75 +385,154 @@ def diagram_4_cooldown_visual():
 
 
 def diagram_5_exception_handling():
-    """What happens when someone is on vacation."""
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    """Option C: Pointer holds position on vacation. 4-week scenario."""
+    fig, axes = plt.subplots(1, 4, figsize=(20, 8))
     fig.patch.set_facecolor(WHITE)
-    fig.suptitle('Diagram 5: Exception Handling (Vacation)\n'
-                 'Week 3 — Carol is unavailable',
-                 fontsize=14, fontweight='bold', y=1.02)
+    fig.suptitle('Diagram 5: Vacation Handling — Pointer Holds Position (Option C)\n'
+                 'Carol is on vacation Weeks 3-4. Pointer stays at Carol. She is assigned when she returns.',
+                 fontsize=14, fontweight='bold', y=1.0)
 
-    # Left: Normal week 3
-    ax = axes[0]
-    ax.set_xlim(-0.5, 3)
-    ax.set_ylim(-0.5, 7)
-    ax.axis('off')
-    ax.set_title('Normal Week 3\n(no exceptions)', fontsize=12, fontweight='bold', color=GREEN)
+    PURPLE = '#8e6fad'
+    LIGHT_PURPLE = '#ede4f5'
 
-    normal = [(0, 'Alice', WHITE, '#ccc', ''),
-              (1, 'Bob', WHITE, '#ccc', ''),
-              (2, 'Carol', WHITE, '#ccc', ''),
-              (3, 'Dave', '#fce4e4', RED, 'skip: did B wk2'),
-              (4, 'Eve', LIGHT_BLUE, BLUE, 'APP A'),
-              (5, 'Frank', LIGHT_ORANGE, ORANGE, 'APP B')]
+    # Week 2 (normal, sets context):
+    #   Ptr A was at 0 (Alice) → advances to 2 (Carol). Bob(1) cool-down skipped.
+    #   Ptr B was at 1 (Bob)   → advances to 3 (Dave). Alice(0) cool-down skipped.
+    # Week 3 (Carol on vacation):
+    #   Ptr A at 2 (Carol) → try Carol → VACATION → ptr HOLDS at 2, find substitute:
+    #     try Dave(3) → cool-down (did B wk2) → try Eve(4) ✓ (substitute assigned)
+    #   Ptr B at 3 (Dave) → advances to 5 → try Eve(4) → cool-down? no, but same as A → skip
+    #     try Frank(5) ✓
+    # Week 4 (Carol still on vacation):
+    #   Ptr A still at 2 (Carol) → try Carol → VACATION → ptr HOLDS at 2, find substitute:
+    #     try Dave(3) → was he cool-down? Frank did B wk3, Eve did A wk3.
+    #     Dave is fine → Dave ✓ (substitute)
+    #   Ptr B at 5 (Frank) → try Alice(0) ✓
+    # Week 5 (Carol returns):
+    #   Ptr A still at 2 (Carol) → try Carol → AVAILABLE → Carol ✓! Ptr advances to 2.
+    #   Ptr B at 0 (Alice) → try Bob(1) → cool-down? No. Same as A? No → Bob ✓
 
-    # Reverse so index 0 is at top
-    for rot_order, name, color, edge, note in normal:
-        y = 5.5 - rot_order
-        rect = mpatches.FancyBboxPatch((0.2, y - 0.3), 1.2, 0.6,
-                                        boxstyle='round,pad=0.08',
-                                        facecolor=color, edgecolor=edge, linewidth=1.5)
-        ax.add_patch(rect)
-        ax.text(0.8, y, name, ha='center', va='center', fontsize=10, fontweight='bold')
-        if note:
-            ncolor = BLUE if 'APP A' in note else (ORANGE if 'APP B' in note else RED)
-            ax.text(1.55, y, note, ha='left', va='center', fontsize=9, color=ncolor, fontweight='bold')
+    weeks_data = [
+        {
+            'title': 'Week 2 (normal)',
+            'subtitle': 'Sets baseline pointers',
+            'members': [
+                ('Alice', '#fce4e4', RED, 'skip: did A wk1'),
+                ('Bob',   '#fce4e4', RED, 'skip: did B wk1'),
+                ('Carol', LIGHT_BLUE, BLUE, 'APP A'),
+                ('Dave',  LIGHT_ORANGE, ORANGE, 'APP B'),
+                ('Eve',   WHITE, '#ccc', ''),
+                ('Frank', WHITE, '#ccc', ''),
+            ],
+            'ptr_a': 'Ptr A → 2 (Carol)',
+            'ptr_b': 'Ptr B → 3 (Dave)',
+            'note': '',
+        },
+        {
+            'title': 'Week 3 (Carol on vacation)',
+            'subtitle': 'Pointer A HOLDS at Carol',
+            'members': [
+                ('Alice', WHITE, '#ccc', ''),
+                ('Bob',   WHITE, '#ccc', ''),
+                ('Carol', GRAY, '#999', 'VACATION'),
+                ('Dave',  '#fce4e4', RED, 'skip: did B wk2'),
+                ('Eve',   LIGHT_BLUE, BLUE, 'APP A (sub)'),
+                ('Frank', LIGHT_ORANGE, ORANGE, 'APP B'),
+            ],
+            'ptr_a': 'Ptr A → 2 (HELD)',
+            'ptr_b': 'Ptr B → 5 (Frank)',
+            'note': 'Ptr A stays at 2!\nEve is a substitute,\nnot the real advance.',
+        },
+        {
+            'title': 'Week 4 (Carol still out)',
+            'subtitle': 'Pointer A still held at Carol',
+            'members': [
+                ('Alice', LIGHT_ORANGE, ORANGE, 'APP B'),
+                ('Bob',   WHITE, '#ccc', ''),
+                ('Carol', GRAY, '#999', 'VACATION'),
+                ('Dave',  LIGHT_BLUE, BLUE, 'APP A (sub)'),
+                ('Eve',   '#fce4e4', RED, 'skip: did A wk3'),
+                ('Frank', '#fce4e4', RED, 'skip: did B wk3'),
+            ],
+            'ptr_a': 'Ptr A → 2 (HELD)',
+            'ptr_b': 'Ptr B → 0 (Alice)',
+            'note': 'Ptr A still at 2.\nDave substitutes again.\nCarol owes her turn.',
+        },
+        {
+            'title': 'Week 5 (Carol returns!)',
+            'subtitle': 'Carol is first in line',
+            'members': [
+                ('Alice', '#fce4e4', RED, 'skip: did B wk4'),
+                ('Bob',   LIGHT_ORANGE, ORANGE, 'APP B'),
+                ('Carol', LIGHT_PURPLE, PURPLE, 'APP A ★'),
+                ('Dave',  '#fce4e4', RED, 'skip: did A wk4'),
+                ('Eve',   WHITE, '#ccc', ''),
+                ('Frank', WHITE, '#ccc', ''),
+            ],
+            'ptr_a': 'Ptr A → 2 (Carol) ★',
+            'ptr_b': 'Ptr B → 1 (Bob)',
+            'note': 'Carol gets assigned!\nHer turn was deferred,\nnot lost. Ptr advances.',
+        },
+    ]
 
-    # Right: Exception week 3 (Carol on vacation)
-    ax = axes[1]
-    ax.set_xlim(-0.5, 3.5)
-    ax.set_ylim(-0.5, 7)
-    ax.axis('off')
-    ax.set_title('Week 3 with Carol on Vacation\n(algorithm adapts)', fontsize=12, fontweight='bold', color=ORANGE)
+    for ax, wd in zip(axes, weeks_data):
+        ax.set_xlim(-0.5, 3.5)
+        ax.set_ylim(-2.5, 7.5)
+        ax.axis('off')
+        ax.set_title(f"{wd['title']}\n{wd['subtitle']}", fontsize=11, fontweight='bold')
 
-    exception = [(0, 'Alice', WHITE, '#ccc', ''),
-                 (1, 'Bob', WHITE, '#ccc', ''),
-                 (2, 'Carol', GRAY, '#999', 'VACATION'),
-                 (3, 'Dave', '#fce4e4', RED, 'skip: did B wk2'),
-                 (4, 'Eve', LIGHT_BLUE, BLUE, 'APP A'),
-                 (5, 'Frank', LIGHT_ORANGE, ORANGE, 'APP B')]
+        for i, (name, color, edge, note) in enumerate(wd['members']):
+            y = 5.5 - i
+            rect = mpatches.FancyBboxPatch((0.1, y - 0.3), 1.1, 0.6,
+                                            boxstyle='round,pad=0.08',
+                                            facecolor=color, edgecolor=edge, linewidth=1.5)
+            ax.add_patch(rect)
+            style = 'italic' if note == 'VACATION' else 'normal'
+            ax.text(0.65, y, name, ha='center', va='center', fontsize=10,
+                    fontweight='bold', style=style)
+            if note:
+                if 'VACATION' in note:
+                    ncolor = '#999'
+                elif 'APP A' in note:
+                    ncolor = BLUE if '★' not in note else PURPLE
+                elif 'APP B' in note:
+                    ncolor = ORANGE
+                else:
+                    ncolor = RED
+                ax.text(1.3, y, note, ha='left', va='center', fontsize=8,
+                        color=ncolor, fontweight='bold')
 
-    for rot_order, name, color, edge, note in exception:
-        y = 5.5 - rot_order
-        rect = mpatches.FancyBboxPatch((0.2, y - 0.3), 1.2, 0.6,
-                                        boxstyle='round,pad=0.08',
-                                        facecolor=color, edgecolor=edge, linewidth=1.5)
-        ax.add_patch(rect)
-        style = 'italic' if note == 'VACATION' else 'normal'
-        ax.text(0.8, y, name, ha='center', va='center', fontsize=10, fontweight='bold',
-                style=style)
-        if note:
-            ncolor = '#999' if 'VACATION' in note else (
-                BLUE if 'APP A' in note else (ORANGE if 'APP B' in note else RED))
-            ax.text(1.55, y, note, ha='left', va='center', fontsize=9, color=ncolor, fontweight='bold')
+        # Pointer status
+        ptr_a_color = PURPLE if 'HELD' in wd['ptr_a'] or '★' in wd['ptr_a'] else BLUE
+        ax.text(0.1, -0.3, wd['ptr_a'], fontsize=8.5, color=ptr_a_color, fontweight='bold',
+                bbox=dict(boxstyle='round,pad=0.2', facecolor=LIGHT_BLUE, edgecolor=ptr_a_color, lw=1.5))
+        ax.text(0.1, -0.85, wd['ptr_b'], fontsize=8.5, color=ORANGE, fontweight='bold',
+                bbox=dict(boxstyle='round,pad=0.2', facecolor=LIGHT_ORANGE, edgecolor=ORANGE, lw=1.5))
 
-    # Annotation showing the algorithm thought process
-    ax.text(0.2, -0.3,
-            'App A: ptr at 2 → try Carol → VACATION → try Dave → cool-down → try Eve ✓\n'
-            'App B: ptr at 3 → try Eve → same as App A → try Frank ✓',
-            fontsize=9, color='#555', va='top', style='italic',
-            bbox=dict(boxstyle='round,pad=0.4', facecolor='#f9f9f9', edgecolor='#ddd'))
+        if wd['note']:
+            ax.text(0.1, -1.6, wd['note'], fontsize=8.5, color='#555', va='top',
+                    style='italic',
+                    bbox=dict(boxstyle='round,pad=0.3', facecolor='#f9f9f9', edgecolor='#ddd'))
 
-    fig.tight_layout()
+    # Bottom legend
+    legend_items = [
+        (LIGHT_BLUE, BLUE, 'Assigned App A'),
+        (LIGHT_ORANGE, ORANGE, 'Assigned App B'),
+        (LIGHT_PURPLE, PURPLE, 'Deferred turn fulfilled ★'),
+        ('#fce4e4', RED, 'Skipped (cool-down)'),
+        (GRAY, '#999', 'On vacation (ptr holds)'),
+    ]
+    fig.subplots_adjust(bottom=0.12)
+    for i, (fc, ec, label) in enumerate(legend_items):
+        x = 0.06 + i * 0.19
+        rect = mpatches.FancyBboxPatch((x, 0.02), 0.025, 0.03,
+                                        boxstyle='round,pad=0.004',
+                                        facecolor=fc, edgecolor=ec, linewidth=1.5,
+                                        transform=fig.transFigure)
+        fig.patches.append(rect)
+        fig.text(x + 0.032, 0.035, label, fontsize=8.5, va='center')
+
+    fig.tight_layout(rect=[0, 0.08, 1, 0.95])
     fig.savefig(f'{OUT_DIR}/05_exception_handling.png', dpi=150, bbox_inches='tight', facecolor=WHITE)
     plt.close(fig)
     print(f'Saved 05_exception_handling.png')
