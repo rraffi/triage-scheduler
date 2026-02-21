@@ -605,60 +605,102 @@ def diagram_6_graceful_degradation():
 
 
 def diagram_7_fairness():
-    """Bar chart showing assignment distribution over 12 weeks."""
-    fig, ax = plt.subplots(figsize=(12, 5))
+    """Bar chart + rotation table showing fair distribution over 12 weeks."""
+    fig = plt.figure(figsize=(14, 10))
     fig.patch.set_facecolor(WHITE)
+    fig.suptitle('Diagram 7: Fairness With Label Rotation (12 Weeks)\n'
+                 'Every member does every app equally — labels swap at the half-cycle',
+                 fontsize=15, fontweight='bold', y=0.98)
 
-    ax.set_title('Diagram 7: Fairness Over 12 Weeks\n'
-                 'Every member gets equal duty — 2 assignments each per 6-week cycle',
-                 fontsize=14, fontweight='bold', pad=15)
+    # --- Top: rotation table showing the two 6-week cycles ---
+    ax_table = fig.add_axes([0.05, 0.52, 0.9, 0.40])
+    ax_table.axis('off')
 
-    # Over 12 weeks with 6 members: each person gets App A twice and App B twice
+    # Actual schedule produced by the algorithm (verified):
+    # Cycle 1 (wks 1-3): Ptr A→App A, Ptr B→App B
+    # Cycle 2 (wks 4-6): Ptr A→App B, Ptr B→App A  (labels swapped)
+    schedule = [
+        ('1', 'Alice', 'Bob'),   ('2', 'Carol', 'Dave'),  ('3', 'Eve', 'Frank'),
+        ('4', 'Bob', 'Alice'),   ('5', 'Dave', 'Carol'),  ('6', 'Frank', 'Eve'),
+        ('7', 'Alice', 'Bob'),   ('8', 'Carol', 'Dave'),  ('9', 'Eve', 'Frank'),
+        ('10', 'Bob', 'Alice'),  ('11', 'Dave', 'Carol'), ('12', 'Frank', 'Eve'),
+    ]
+
+    col_labels = ['Week', 'App A', 'App B']
+    cell_text = [[w, a, b] for w, a, b in schedule]
+    cell_colors = []
+    for i, (w, a, b) in enumerate(schedule):
+        cycle = 'first' if (i % 6) < 3 else 'second'
+        bg_a = LIGHT_BLUE if cycle == 'first' else '#e8d5f5'   # purple tint for swapped
+        bg_b = LIGHT_ORANGE if cycle == 'first' else '#d5ebd5'  # green tint for swapped
+        cell_colors.append([WHITE, bg_a, bg_b])
+
+    table = ax_table.table(cellText=cell_text, colLabels=col_labels,
+                           cellColours=cell_colors, loc='center', cellLoc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1.0, 1.6)
+
+    for j in range(len(col_labels)):
+        cell = table[0, j]
+        cell.set_facecolor(DARK)
+        cell.set_text_props(color=WHITE, fontweight='bold')
+
+    # Cycle boundary markers
+    for row_idx in [4, 10]:  # rows after week 3 and 9 (1-indexed with header)
+        for j in range(len(col_labels)):
+            cell = table[row_idx, j]
+            cell.set_edgecolor(GREEN)
+            cell.set_linewidth(2)
+
+    ax_table.text(0.5, -0.05,
+                  'Blue/Orange = normal pointer-to-app mapping  |  '
+                  'Purple/Green = labels swapped (cycle 2)  |  '
+                  'Green border = swap boundary',
+                  ha='center', va='top', fontsize=9, style='italic', color='#555',
+                  transform=ax_table.transAxes)
+
+    # --- Bottom: bar chart showing equal 2/2 split ---
+    ax_bar = fig.add_axes([0.08, 0.06, 0.85, 0.38])
+
     members = SHORT
-    app_a_counts = [2, 0, 2, 0, 2, 0]  # Alice, Carol, Eve do App A
-    app_b_counts = [0, 2, 0, 2, 0, 2]  # Bob, Dave, Frank do App B
-
-    # Actually with the pattern: Alice does A wk1,4,7,10 = 4 times in 12 weeks
-    # Wait, let me recalculate for 12 weeks:
-    # Wk1: A=Alice, B=Bob; Wk2: A=Carol, B=Dave; Wk3: A=Eve, B=Frank
-    # Wk4: A=Alice, B=Bob; ... repeats every 3 weeks
-    # In 12 weeks: each person assigned 4 times total (always same app)
-    app_a_counts = [4, 0, 4, 0, 4, 0]
-    app_b_counts = [0, 4, 0, 4, 0, 4]
+    # With label rotation: each member gets App A twice and App B twice in 12 weeks
+    app_a_counts = [2, 2, 2, 2, 2, 2]
+    app_b_counts = [2, 2, 2, 2, 2, 2]
 
     x = np.arange(len(members))
     width = 0.35
 
-    bars1 = ax.bar(x - width/2, app_a_counts, width, label='App A', color=BLUE, edgecolor='white')
-    bars2 = ax.bar(x + width/2, app_b_counts, width, label='App B', color=ORANGE, edgecolor='white')
+    bars1 = ax_bar.bar(x - width/2, app_a_counts, width, label='App A', color=BLUE, edgecolor='white')
+    bars2 = ax_bar.bar(x + width/2, app_b_counts, width, label='App B', color=ORANGE, edgecolor='white')
 
-    ax.set_ylabel('Number of Assignments', fontsize=11)
-    ax.set_xlabel('Team Members', fontsize=11)
-    ax.set_xticks(x)
-    ax.set_xticklabels(members, fontsize=11)
-    ax.legend(fontsize=11)
-    ax.set_ylim(0, 6)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
+    ax_bar.set_ylabel('Assignments (12 weeks)', fontsize=11)
+    ax_bar.set_xlabel('Team Members', fontsize=11)
+    ax_bar.set_xticks(x)
+    ax_bar.set_xticklabels(members, fontsize=11)
+    ax_bar.legend(fontsize=11, loc='upper right')
+    ax_bar.set_ylim(0, 5)
+    ax_bar.set_yticks([0, 1, 2, 3, 4])
+    ax_bar.spines['top'].set_visible(False)
+    ax_bar.spines['right'].set_visible(False)
 
-    # Add value labels
     for bar in bars1:
         if bar.get_height() > 0:
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1,
-                    str(int(bar.get_height())), ha='center', fontsize=10, fontweight='bold')
+            ax_bar.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1,
+                        str(int(bar.get_height())), ha='center', fontsize=10, fontweight='bold',
+                        color=BLUE)
     for bar in bars2:
         if bar.get_height() > 0:
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1,
-                    str(int(bar.get_height())), ha='center', fontsize=10, fontweight='bold')
+            ax_bar.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1,
+                        str(int(bar.get_height())), ha='center', fontsize=10, fontweight='bold',
+                        color=ORANGE)
 
-    ax.text(0.5, -0.18,
-            'Note: With the basic dual-pointer algorithm, odd-indexed members always get App B\n'
-            'and even-indexed always get App A. Total duty is equal (4 each over 12 weeks).\n'
-            'To rotate across apps, the pointers can be offset periodically.',
-            ha='center', va='top', fontsize=9, style='italic', color='#555',
-            transform=ax.transAxes)
+    ax_bar.text(0.5, -0.15,
+                'Label rotation swaps pointer-to-app mapping every N/K = 3 weeks.\n'
+                'Result: perfectly equal distribution — every member does every app the same number of times.',
+                ha='center', va='top', fontsize=9, style='italic', color='#555',
+                transform=ax_bar.transAxes)
 
-    fig.tight_layout()
     fig.savefig(f'{OUT_DIR}/07_fairness.png', dpi=150, bbox_inches='tight', facecolor=WHITE)
     plt.close(fig)
     print(f'Saved 07_fairness.png')
