@@ -1,5 +1,15 @@
 # Triage Scheduler — Implementation Plan
 
+## Problem
+
+A team of N members rotates triage duty across K applications on a weekly cadence.
+Naive round-robin with K independent pointers causes members to get locked to the
+same app(s) due to the GCD problem (effective step size `gcd(K, N)` partitions the
+ring). We need a system that is both **fair** (equal total duty) and **balanced**
+(equal exposure to every app).
+
+---
+
 ## Context
 
 Build an internal tool to assign team members ("automation angels") to triage duty
