@@ -8,7 +8,7 @@ import matplotlib.patches as mpatches
 import numpy as np
 import os
 
-OUT_DIR = '/home/user/triage-scheduler/docs/diagrams'
+OUT_DIR = os.path.join(os.path.dirname(__file__), 'diagrams')
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Shared colors
@@ -385,63 +385,62 @@ def diagram_4_cooldown_visual():
 
 
 def diagram_5_exception_handling():
-    """Option C: Pointer holds position on vacation. 4-week scenario."""
+    """Option C: Pointer holds position on vacation. 4-week scenario.
+
+    Correct scenario: Carol is at ring position 2. After Bob (pos 1) is assigned
+    App A in Week 2, Ptr A sits at position 1. Week 3's search starts at pos 2
+    (Carol) — her natural turn. Since she's on vacation, the pointer HOLDS at
+    position 1 (just before Carol) and a substitute is found. This continues until
+    Carol returns, at which point she gets her deferred assignment.
+
+    Trace (Ptr A only; Ptr B advances normally):
+      Week 2: Bob assigned App A → Ptr A at 1 (Bob).
+      Week 3: start = pos 2 (Carol) → VACATION → HOLD. Dave cooldown, Eve subs.
+              Ptr A stays at 1. Ptr B (at 3/Dave) → Frank gets App B.
+      Week 4: start = pos 2 (Carol) → VACATION → HOLD (re-armed). Dave subs.
+              Alice gets App B. Ptr A stays at 1.
+      Week 5: start = pos 2 (Carol) → AVAILABLE → Carol assigned ★. Ptr A → 2.
+              Bob gets App B.
+    """
     fig, axes = plt.subplots(1, 4, figsize=(20, 8))
     fig.patch.set_facecolor(WHITE)
     fig.suptitle('Diagram 5: Vacation Handling — Pointer Holds Position (Option C)\n'
-                 'Carol is on vacation Weeks 3-4. Pointer stays at Carol. She is assigned when she returns.',
+                 'Carol is on vacation Weeks 3-4. Her natural turn (pos 2) is held. She is assigned when she returns.',
                  fontsize=14, fontweight='bold', y=1.0)
 
     PURPLE = '#8e6fad'
     LIGHT_PURPLE = '#ede4f5'
 
-    # Week 2 (normal, sets context):
-    #   Ptr A was at 0 (Alice) → advances to 2 (Carol). Bob(1) cool-down skipped.
-    #   Ptr B was at 1 (Bob)   → advances to 3 (Dave). Alice(0) cool-down skipped.
-    # Week 3 (Carol on vacation):
-    #   Ptr A at 2 (Carol) → try Carol → VACATION → ptr HOLDS at 2, find substitute:
-    #     try Dave(3) → cool-down (did B wk2) → try Eve(4) ✓ (substitute assigned)
-    #   Ptr B at 3 (Dave) → advances to 5 → try Eve(4) → cool-down? no, but same as A → skip
-    #     try Frank(5) ✓
-    # Week 4 (Carol still on vacation):
-    #   Ptr A still at 2 (Carol) → try Carol → VACATION → ptr HOLDS at 2, find substitute:
-    #     try Dave(3) → was he cool-down? Frank did B wk3, Eve did A wk3.
-    #     Dave is fine → Dave ✓ (substitute)
-    #   Ptr B at 5 (Frank) → try Alice(0) ✓
-    # Week 5 (Carol returns):
-    #   Ptr A still at 2 (Carol) → try Carol → AVAILABLE → Carol ✓! Ptr advances to 2.
-    #   Ptr B at 0 (Alice) → try Bob(1) → cool-down? No. Same as A? No → Bob ✓
-
     weeks_data = [
         {
             'title': 'Week 2 (normal)',
-            'subtitle': 'Sets baseline pointers',
+            'subtitle': 'Sets baseline — Carol is next',
             'members': [
                 ('Alice', '#fce4e4', RED, 'skip: did A wk1'),
-                ('Bob',   '#fce4e4', RED, 'skip: did B wk1'),
-                ('Carol', LIGHT_BLUE, BLUE, 'APP A'),
+                ('Bob',   LIGHT_BLUE, BLUE, 'APP A'),
+                ('Carol', WHITE, '#ccc', ''),
                 ('Dave',  LIGHT_ORANGE, ORANGE, 'APP B'),
                 ('Eve',   WHITE, '#ccc', ''),
                 ('Frank', WHITE, '#ccc', ''),
             ],
-            'ptr_a': 'Ptr A → 2 (Carol)',
+            'ptr_a': 'Ptr A → 1 (Bob)',
             'ptr_b': 'Ptr B → 3 (Dave)',
-            'note': '',
+            'note': 'Ptr A at 1 (Bob).\nNext search starts at pos 2\n→ Carol\'s natural turn.',
         },
         {
             'title': 'Week 3 (Carol on vacation)',
             'subtitle': 'Pointer A HOLDS at Carol',
             'members': [
                 ('Alice', WHITE, '#ccc', ''),
-                ('Bob',   WHITE, '#ccc', ''),
+                ('Bob',   '#fce4e4', RED, 'skip: did A wk2'),
                 ('Carol', GRAY, '#999', 'VACATION'),
                 ('Dave',  '#fce4e4', RED, 'skip: did B wk2'),
                 ('Eve',   LIGHT_BLUE, BLUE, 'APP A (sub)'),
                 ('Frank', LIGHT_ORANGE, ORANGE, 'APP B'),
             ],
-            'ptr_a': 'Ptr A → 2 (HELD)',
+            'ptr_a': 'Ptr A → 1 (HELD)',
             'ptr_b': 'Ptr B → 5 (Frank)',
-            'note': 'Ptr A stays at 2!\nEve is a substitute,\nnot the real advance.',
+            'note': 'start = pos 2 = Carol → VACATION\n→ HOLD. Ptr stays at 1.\nEve substitutes for App A.',
         },
         {
             'title': 'Week 4 (Carol still out)',
@@ -454,9 +453,9 @@ def diagram_5_exception_handling():
                 ('Eve',   '#fce4e4', RED, 'skip: did A wk3'),
                 ('Frank', '#fce4e4', RED, 'skip: did B wk3'),
             ],
-            'ptr_a': 'Ptr A → 2 (HELD)',
+            'ptr_a': 'Ptr A → 1 (HELD)',
             'ptr_b': 'Ptr B → 0 (Alice)',
-            'note': 'Ptr A still at 2.\nDave substitutes again.\nCarol owes her turn.',
+            'note': 'start = pos 2 = Carol → VACATION\n→ HOLD re-armed. Ptr stays at 1.\nDave substitutes again.',
         },
         {
             'title': 'Week 5 (Carol returns!)',
@@ -471,7 +470,7 @@ def diagram_5_exception_handling():
             ],
             'ptr_a': 'Ptr A → 2 (Carol) ★',
             'ptr_b': 'Ptr B → 1 (Bob)',
-            'note': 'Carol gets assigned!\nHer turn was deferred,\nnot lost. Ptr advances.',
+            'note': 'start = pos 2 = Carol → AVAILABLE\n→ Carol assigned! Turn deferred,\nnot lost. Ptr advances to 2.',
         },
     ]
 

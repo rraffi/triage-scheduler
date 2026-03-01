@@ -49,6 +49,11 @@ File: `src/scheduler.py` — pure functions, no Flask dependencies.
    - Pointer does NOT advance past a vacationing member.
    - A substitute is found from the remaining pool.
    - When the member returns, the held pointer makes them first in line (deferred turn).
+   - **Known implementation issue (multi-week hold):** `_find_candidate` re-arms the
+     substitute only when `pos == start and not pointer.held`. The `not pointer.held`
+     guard prevents re-arming on week 2+ of a vacation, causing the pointer to advance
+     past the vacationing member. Fix: drop `and not pointer.held` so the condition
+     is simply `pos == start`.
 5. **Graceful degradation**: if the pool is too small to satisfy cool-down, relax the
    constraint with a logged warning. If fewer available members than apps, raise `SchedulingError`.
 
