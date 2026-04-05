@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Schedule{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="mb-0">Schedule</h2>
+  <div class="d-flex align-items-center gap-3">
+    {# App color legend #}
+    <div class="d-flex gap-2 align-items-center">
+      {% for app_name, color in app_colors.items() %}
+      <span class="badge rounded-pill bg-{{ color }}">{{ app_name }}</span>
+      {% endfor %}
+      <span class="badge rounded-pill border border-secondary text-secondary">preview</span>
+      <span class="text-muted small ms-1">sub = substitute</span>
+    </div>
+  </div>
+</div>
+
+{# Month navigation #}
+<div class="d-flex align-items-center gap-3 mb-3">
+  <a href="{{ url_for('admin.schedule', year=prev_month.year, month=prev_month.month) }}"
+     class="btn btn-outline-secondary btn-sm">&#8592; {{ prev_month.strftime("%b") }}</a>
+  <h4 class="mb-0">{{ month_name }}</h4>
+  <a href="{{ url_for('admin.schedule', year=next_month.year, month=next_month.month) }}"
+     class="btn btn-outline-secondary btn-sm">{{ next_month.strftime("%b") }} &#8594;</a>
+</div>
+
+{# Calendar table #}
+<table class="table table-bordered align-middle mb-4" style="table-layout:fixed">
+  <thead class="table-dark">
+    <tr>
+      <th style="width:110px">Week of</th>
+      {% for app_name, color in app_colors.items() %}
+      <th>
+        <span class="badge bg-{{ color }}">{{ app_name }}</span>
+      </th>
+      {% endfor %}
+      <th style="width:120px">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for week in weeks %}
+    {% set row_class = "table-light" if not week.in_month else ("table-success bg-opacity-25" if week.persisted else "") %}
+    <tr class="{{ row_class }} {{ 'fw-bold' if week.monday == today else '' }}">
+      <td class="text-nowrap">
+        {{ week.monday.strftime("%d %b") }}
+        {% if week.monday == today %}<span class="badge bg-dark ms-1">today</span>{% endif %}
+        {% if week.persisted %}
+        <span class="badge bg-success ms-1" title="Scheduled">✓</span>
+        {% endif %}
+      </td>
+
+      {# One cell per app — find matching assignment #}
+      {% for app_name, color in app_colors.items() %}
+      {% set ns = namespace(found=false) %}
+      <td>
+        {% for a in week.assignments %}
+          {% if a.app == app_name %}
+            {% set ns.found = true %}
+            {% if week.persisted %}
+            <span class="badge rounded-pill bg-{{ color }}">
+              {{ a.member }}{% if a.sub %} <em>sub</em>{% endif %}
+            </span>
+            {% else %}
+            <span class="badge rounded-pill border border-{{ color }} text-{{ color }}"
+                  style="background:transparent">
+              {{ a.member }}{% if a.sub %} <em>sub</em>{% endif %}
+            </span>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        {% if not ns.found %}<span class="text-muted">—</span>{% endif %}
+      </td>
+      {% endfor %}
+
+      <td class="d-flex gap-1">
+        {% if week.persisted %}
+        <form method="post" class="d-inline">
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="week" value="{{ week.monday }}">
+          <button class="btn btn-sm btn-outline-danger"
+                  onclick="return confirm('Delete assignments for week of {{ week.monday }}?')">
+            Delete
+          </button>
+        </form>
+        {% else %}
+        <form method="post" class="d-inline">
+          <input type="hidden" name="action" value="run">
+          <input type="hidden" name="week" value="{{ week.monday }}">
+          <button class="btn btn-sm btn-success"
+                  onclick="return confirm('Persist schedule for week of {{ week.monday }}?')">
+            Run
+          </button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{# State summary #}
+{% if state %}
+<p class="text-muted small">
+  Algorithm state: week {{ state.current_week }} —
+  last assigned:
+  {% for name, app in state.last_assignments.items() %}
+  <span class="badge bg-secondary">{{ name }} → {{ app }}</span>
+  {% endfor %}
+</p>
+{% endif %}
+
+{% endblock %}

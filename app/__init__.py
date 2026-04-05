@@ -17,6 +17,9 @@ def create_app(config_name="default"):
     from app.main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
+    from app.admin import admin as admin_blueprint
+    app.register_blueprint(admin_blueprint)
+
     from app.commands import seed_db, schedule_week, schedule_preview
     app.cli.add_command(seed_db)
     app.cli.add_command(schedule_week)
