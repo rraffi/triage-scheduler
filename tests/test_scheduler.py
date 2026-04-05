@@ -186,6 +186,43 @@ class TestVacation:
         w4_names = {a.member.name for a in w4}
         assert "Carol" in w4_names, "Carol should be assigned on her return week"
 
+    def test_multi_week_vacation_always_has_substitute(self):
+        """
+        Regression test for the 'and not pointer.held' bug.
+
+        When a member is on vacation for multiple consecutive weeks, a substitute
+        must be found every week — not just the first. The old guard prevented
+        re-arming is_substitute on week 2+, causing the pointer to advance past
+        the vacationing member instead of holding and finding a sub.
+        """
+        members = make_members(6)
+        apps = make_apps(2)
+        state = build_initial_state(members, apps)
+
+        # Week 1: normal
+        compute_week(state)
+
+        # Put Carol (index 2) on vacation for 3 consecutive weeks
+        state.members[2].is_available = False
+        for week_num in range(2, 5):  # weeks 2, 3, 4
+            week_result = compute_week(state)
+            names = {a.member.name for a in week_result}
+            assert "Carol" not in names, \
+                f"Carol should not be assigned in week {week_num} while on vacation"
+            # Exactly 2 assignments should exist (one per app)
+            assert len(week_result) == 2, \
+                f"Week {week_num} should still produce 2 assignments"
+            # At least one should be flagged as a substitute
+            subs = [a for a in week_result if a.is_substitute]
+            assert len(subs) >= 1, \
+                f"Week {week_num} should have a substitute while Carol is on vacation"
+
+        # Carol returns week 5 — pointer should land on her
+        state.members[2].is_available = True
+        w5 = compute_week(state)
+        w5_names = {a.member.name for a in w5}
+        assert "Carol" in w5_names, "Carol should be assigned on her return week"
+
 
 # ---------------------------------------------------------------------------
 # Graceful degradation

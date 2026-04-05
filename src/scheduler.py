@@ -88,7 +88,7 @@ def _find_candidate(
 
         # --- Vacation check (pointer does NOT advance) ---
         if not member.is_available:
-            if pos == start and not pointer.held:
+            if pos == start:
                 # This is the member the pointer naturally lands on.
                 # Pointer HOLDS here; we look for a substitute.
                 pointer.held = True
