@@ -10,16 +10,16 @@
   {% if session.get('is_admin') %}
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container">
-      <a class="navbar-brand" href="{{ url_for('admin.roster') }}">Triage Scheduler</a>
+      <a class="navbar-brand" href="{{ url_for('admin.schedule') }}">Triage Scheduler</a>
       <div class="navbar-nav">
+        <a class="nav-link {% if request.endpoint == 'admin.schedule' %}active{% endif %}"
+           href="{{ url_for('admin.schedule') }}">Schedule</a>
+        <a class="nav-link {% if request.endpoint == 'admin.availability' %}active{% endif %}"
+           href="{{ url_for('admin.availability') }}">Availability</a>
         <a class="nav-link {% if request.endpoint == 'admin.roster' %}active{% endif %}"
            href="{{ url_for('admin.roster') }}">Roster</a>
         <a class="nav-link {% if request.endpoint == 'admin.apps' %}active{% endif %}"
            href="{{ url_for('admin.apps') }}">Apps</a>
-        <a class="nav-link {% if request.endpoint == 'admin.availability' %}active{% endif %}"
-           href="{{ url_for('admin.availability') }}">Availability</a>
-        <a class="nav-link {% if request.endpoint == 'admin.schedule' %}active{% endif %}"
-           href="{{ url_for('admin.schedule') }}">Schedule</a>
         <a class="nav-link text-danger" href="{{ url_for('admin.logout') }}">Logout</a>
       </div>
     </div>
