@@ -167,6 +167,30 @@ class TestAvailability:
         }, follow_redirects=True)
         assert b"End date must be after" in r.data
 
+    def test_non_monday_start_rejected(self, auth_client, seeded, app):
+        with app.app_context():
+            alice = Member.query.filter_by(name="Alice").first()
+            alice_id = alice.id
+        r = auth_client.post("/admin/availability/add", data={
+            "member_id": alice_id,
+            "week_start": "2026-04-15",  # Wednesday
+            "week_end": "2026-04-20",    # Monday
+            "reason": "vacation",
+        }, follow_redirects=True)
+        assert b"must be a Monday" in r.data
+
+    def test_non_monday_end_rejected(self, auth_client, seeded, app):
+        with app.app_context():
+            alice = Member.query.filter_by(name="Alice").first()
+            alice_id = alice.id
+        r = auth_client.post("/admin/availability/add", data={
+            "member_id": alice_id,
+            "week_start": "2026-04-13",  # Monday
+            "week_end": "2026-04-17",    # Friday
+            "reason": "vacation",
+        }, follow_redirects=True)
+        assert b"must be a Monday" in r.data
+
     def test_delete_availability_block(self, auth_client, seeded, app):
         with app.app_context():
             alice = Member.query.filter_by(name="Alice").first()

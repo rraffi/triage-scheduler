@@ -223,6 +223,33 @@ class TestVacation:
         w5_names = {a.member.name for a in w5}
         assert "Carol" in w5_names, "Carol should be assigned on her return week"
 
+    def test_substitute_flagged_at_natural_position(self):
+        """
+        Verify is_substitute is set when the pointer's natural first candidate
+        (pos == start) is on vacation.
+
+        Setup: week 1 assigns Alice+Bob. Week 2, Bob on vacation.
+        Pointer 0 naturally advances to Bob (pos == start); a substitute must
+        be found and flagged. Pointer 1 advances past Bob to the next member.
+        """
+        members = make_members(6)
+        apps = make_apps(2)
+        state = build_initial_state(members, apps)
+
+        # Week 1: Alice → App A, Bob → App B
+        compute_week(state)
+
+        # Bob (index 1) goes on vacation for week 2
+        state.members[1].is_available = False
+        w2 = compute_week(state)
+
+        # Bob must not be assigned
+        assert all(a.member.name != "Bob" for a in w2)
+
+        # Exactly one substitute should be flagged
+        subs = [a for a in w2 if a.is_substitute]
+        assert len(subs) == 1, f"Expected 1 substitute, got {len(subs)}: {[a.member.name for a in subs]}"
+
 
 # ---------------------------------------------------------------------------
 # Graceful degradation

@@ -244,6 +244,14 @@ def availability_add():
         flash("Invalid dates.", "danger")
         return redirect(url_for("admin.availability"))
 
+    if week_start.weekday() != 0:
+        flash("Start date must be a Monday.", "danger")
+        return redirect(url_for("admin.availability"))
+
+    if week_end.weekday() != 0:
+        flash("End date must be a Monday.", "danger")
+        return redirect(url_for("admin.availability"))
+
     if week_end <= week_start:
         flash("End date must be after start date.", "danger")
         return redirect(url_for("admin.availability"))

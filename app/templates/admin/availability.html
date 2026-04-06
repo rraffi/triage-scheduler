@@ -44,10 +44,12 @@
     </select>
   </div>
   <div class="col-md-2">
-    <input type="date" name="week_start" class="form-control" placeholder="Start (Monday)" required>
+    <input type="date" name="week_start" class="form-control" placeholder="Start (Monday)" required
+           title="Must be a Monday">
   </div>
   <div class="col-md-2">
-    <input type="date" name="week_end" class="form-control" placeholder="End (Monday)" required>
+    <input type="date" name="week_end" class="form-control" placeholder="End (Monday, exclusive)" required
+           title="Must be a Monday (exclusive end)">
   </div>
   <div class="col-md-2">
     <select name="reason" class="form-select">
