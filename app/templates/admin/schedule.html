@@ -10,8 +10,8 @@
       {% for app_name, color in app_colors.items() %}
       <span class="badge rounded-pill bg-{{ color }}">{{ app_name }}</span>
       {% endfor %}
+      <span class="badge rounded-pill bg-warning text-dark">substitute</span>
       <span class="badge rounded-pill border border-secondary text-secondary">preview</span>
-      <span class="text-muted small ms-1">sub = substitute</span>
     </div>
   </div>
 </div>
@@ -58,13 +58,13 @@
           {% if a.app == app_name %}
             {% set ns.found = true %}
             {% if week.persisted %}
-            <span class="badge rounded-pill bg-{{ color }}">
-              {{ a.member }}{% if a.sub %} <em>sub</em>{% endif %}
+            <span class="badge rounded-pill bg-{{ 'warning text-dark' if a.sub else color }}">
+              {{ a.member }}
             </span>
             {% else %}
-            <span class="badge rounded-pill border border-{{ color }} text-{{ color }}"
+            <span class="badge rounded-pill {% if a.sub %}border border-warning text-warning{% else %}border border-{{ color }} text-{{ color }}{% endif %}"
                   style="background:transparent">
-              {{ a.member }}{% if a.sub %} <em>sub</em>{% endif %}
+              {{ a.member }}
             </span>
             {% endif %}
           {% endif %}
