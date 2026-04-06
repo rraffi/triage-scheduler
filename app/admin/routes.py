@@ -28,7 +28,7 @@ def _next_monday():
 @admin.route("/")
 @admin_required
 def dashboard():
-    return redirect(url_for("admin.roster"))
+    return redirect(url_for("admin.schedule"))
 
 
 # --------------------------------------------------------------------------- #
