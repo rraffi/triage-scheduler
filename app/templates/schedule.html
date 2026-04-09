@@ -31,8 +31,8 @@
     grid-template-columns: repeat(7, 1fr);
   }
   .cal-day {
-    min-height: 80px;
-    padding: 4px 6px 30px; /* bottom padding leaves room for event overlay */
+    min-height: 96px;
+    padding: 6px 8px 44px; /* generous bottom padding for pill separation */
     border-right: 1px solid #dee2e6;
     border-bottom: 1px solid #dee2e6;
     background: #fff;
@@ -43,9 +43,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
-    font-size: .8rem;
+    width: 32px;
+    height: 32px;
+    font-size: 1.05rem;
     font-weight: 500;
   }
   .cal-day-num.today-num {
@@ -58,7 +58,7 @@
   /* Event overlay: absolute, spans Mon–Fri (5/7 of week width) */
   .cal-events {
     position: absolute;
-    bottom: 6px;
+    bottom: 8px;
     left: 3px;
     width: calc(5 / 7 * 100% - 6px);
     display: flex;
