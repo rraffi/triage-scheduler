@@ -1,3 +1,4 @@
+import calendar as _calendar
 from datetime import date, timedelta
 
 from app.db_models import Member, TriageApp, Availability, Assignment, ScheduleState, Team
@@ -138,3 +139,96 @@ def run_week(team_id: str, target_week: date, dry_run: bool = False) -> list:
 
     db.session.commit()
     return orm_assignments
+
+
+def build_calendar(team, year: int, month: int) -> list[dict]:
+    """
+    Return a list of week dicts covering the given month.
+
+    Each dict:
+        monday        : date  — Monday of the week
+        in_month      : bool  — week overlaps the requested month
+        persisted     : bool  — assignments are finalized in DB
+        assignments   : list of {member, member_email, app, app_index, sub}
+
+    app_index is the app's sort_order; color mapping is left to the UI layer.
+    """
+    first_day = date(year, month, 1)
+    last_day = date(year, month, _calendar.monthrange(year, month)[1])
+    start_monday = first_day - timedelta(days=first_day.weekday())
+    end_monday = last_day - timedelta(days=last_day.weekday())
+
+    mondays: list[date] = []
+    d = start_monday
+    while d <= end_monday:
+        mondays.append(d)
+        d += timedelta(weeks=1)
+
+    # Persisted assignments from DB
+    persisted: dict[date, list] = {}
+    if team:
+        rows = (
+            Assignment.query
+            .filter(
+                Assignment.team_id == team.id,
+                Assignment.week >= start_monday,
+                Assignment.week <= end_monday,
+            )
+            .all()
+        )
+        for a in rows:
+            persisted.setdefault(a.week, []).append({
+                "member": a.member.name,
+                "member_email": a.member.email,
+                "app": a.triage_app.name,
+                "app_index": a.triage_app.sort_order,
+                "sub": a.is_substitute,
+            })
+
+    # Preview: dry-run for future unscheduled weeks
+    today = date.today()
+    future_mondays = [m for m in mondays if m not in persisted and m >= today]
+    preview: dict[date, list] = {}
+
+    if team and future_mondays:
+        member_email = {m.name: m.email for m in team.members}
+        app_index_map = {
+            a.name: a.sort_order
+            for a in team.apps
+        }
+        try:
+            first_future = future_mondays[0]
+            dm, da, _, _ = _load_domain_objects(team, first_future)
+            orm_state = team.schedule_state
+            domain_state = (
+                _orm_state_to_domain(orm_state, dm, da)
+                if orm_state else build_initial_state(dm, da)
+            )
+            for monday in future_mondays:
+                dm, da, _, _ = _load_domain_objects(team, monday)
+                domain_state.members = dm
+                domain_state.apps = da
+                week_assignments = compute_week(domain_state)
+                preview[monday] = [
+                    {
+                        "member": a.member.name,
+                        "member_email": member_email.get(a.member.name, ""),
+                        "app": a.app.name,
+                        "app_index": app_index_map.get(a.app.name, 0),
+                        "sub": a.is_substitute,
+                    }
+                    for a in week_assignments
+                ]
+        except Exception:
+            pass
+
+    weeks = []
+    for monday in mondays:
+        in_month = monday.month == month or (monday + timedelta(days=6)).month == month
+        weeks.append({
+            "monday": monday,
+            "in_month": in_month,
+            "persisted": monday in persisted,
+            "assignments": persisted.get(monday) or preview.get(monday) or [],
+        })
+    return weeks

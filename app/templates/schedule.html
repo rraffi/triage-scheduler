@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Triage Schedule{% endblock %}
+{% block content %}
+
+<style>
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-left: 1px solid #dee2e6;
+    border-top: 1px solid #dee2e6;
+  }
+  .cal-header-cell {
+    background: #343a40;
+    color: #fff;
+    text-align: center;
+    padding: 6px 4px;
+    font-size: .75rem;
+    font-weight: 600;
+    border-right: 1px solid #4a5058;
+    border-bottom: 1px solid #4a5058;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .cal-day {
+    min-height: 68px;
+    padding: 4px 6px 2px;
+    border-right: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+    background: #fff;
+    vertical-align: top;
+  }
+  .cal-day.out-of-month {
+    background: #f8f9fa;
+  }
+  .cal-day.today-col {
+    background: #eef4ff;
+  }
+  .cal-day-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: .8rem;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .cal-day-num.today-num {
+    background: #0d6efd;
+    color: #fff;
+    border-radius: 50%;
+  }
+  .cal-day-num.out-of-month-num {
+    color: #adb5bd;
+  }
+  /* Event row: spans Mon-Fri (cols 1-5), placed on the events sub-row */
+  .cal-events-row {
+    grid-column: 1 / span 5;
+    border-right: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+    padding: 2px 4px 4px;
+    background: #fff;
+    min-height: 28px;
+  }
+  .cal-events-row.out-of-month {
+    background: #f8f9fa;
+  }
+  .cal-events-row.today-row {
+    background: #eef4ff;
+  }
+  .cal-empty-weekend {
+    grid-column: span 2;
+    border-right: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+    min-height: 28px;
+  }
+  .cal-event {
+    display: inline-block;
+    font-size: .7rem;
+    padding: 1px 7px;
+    border-radius: 20px;
+    margin: 1px 2px;
+    white-space: nowrap;
+  }
+</style>
+
+{# ── Hero: current week ─────────────────────────────────────────────── #}
+{% if hero %}
+<div class="card mb-4 border-0 shadow-sm">
+  <div class="card-body py-3">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div>
+        <span class="text-muted small text-uppercase fw-semibold">This week</span>
+        <div class="fw-bold">{{ hero.monday.strftime("%d %b %Y") }}</div>
+        {% if not hero.persisted %}
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size:.65rem">preview</span>
+        {% endif %}
+      </div>
+      <div class="vr d-none d-sm-block"></div>
+      {% for a in hero.assignments %}
+      <div class="d-flex align-items-center gap-2">
+        {% if a.sub %}
+        <span class="badge rounded-pill bg-warning text-dark">{{ a.app }}</span>
+        {% else %}
+        <span class="badge rounded-pill bg-{{ a.color }}">{{ a.app }}</span>
+        {% endif %}
+        <span class="fw-semibold">{{ a.member }}</span>
+        <a href="mailto:{{ a.member_email }}" class="text-muted small text-decoration-none">{{ a.member_email }}</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Month navigation ────────────────────────────────────────────────── #}
+<div class="d-flex align-items-center gap-3 mb-3">
+  <a href="{{ url_for('main.index', year=prev_month.year, month=prev_month.month) }}"
+     class="btn btn-outline-secondary btn-sm">&#8592; {{ prev_month.strftime("%b") }}</a>
+  <h4 class="mb-0">{{ month_name }}</h4>
+  <a href="{{ url_for('main.index', year=next_month.year, month=next_month.month) }}"
+     class="btn btn-outline-secondary btn-sm">{{ next_month.strftime("%b") }} &#8594;</a>
+</div>
+
+{# ── App legend ──────────────────────────────────────────────────────── #}
+<div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+  {% for app_name, color in app_colors.items() %}
+  <span class="badge rounded-pill bg-{{ color }}">{{ app_name }}</span>
+  {% endfor %}
+  <span class="badge rounded-pill bg-warning text-dark">substitute</span>
+  <span class="cal-event border border-secondary text-secondary">preview</span>
+</div>
+
+{# ── Calendar grid ───────────────────────────────────────────────────── #}
+<div class="cal-grid">
+
+  {# Header row #}
+  {% for day_name in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] %}
+  <div class="cal-header-cell">{{ day_name }}</div>
+  {% endfor %}
+
+  {% for week in weeks %}
+
+  {# Day-number row: 7 cells (Mon-Sun) #}
+  {% for day in week.days %}
+  {% set is_today = (day == today) %}
+  {% set in_month = (day.month == month) %}
+  <div class="cal-day {% if not in_month %}out-of-month{% elif is_today %}today-col{% endif %}">
+    <span class="cal-day-num {% if is_today %}today-num{% elif not in_month %}out-of-month-num{% endif %}">
+      {{ day.day }}
+    </span>
+  </div>
+  {% endfor %}
+
+  {# Events row: spans Mon-Fri, then empty Sat-Sun #}
+  <div class="cal-events-row {% if not week.in_month %}out-of-month{% elif week.is_today_week %}today-row{% endif %}">
+    {% for a in week.assignments %}
+      {% if week.persisted %}
+        {% if a.sub %}
+        <span class="cal-event bg-warning text-dark">{{ a.app }}: {{ a.member }}</span>
+        {% else %}
+        <span class="cal-event bg-{{ a.color }} text-white">{{ a.app }}: {{ a.member }}</span>
+        {% endif %}
+      {% else %}
+        {% if a.sub %}
+        <span class="cal-event border border-warning text-warning">{{ a.app }}: {{ a.member }}</span>
+        {% else %}
+        <span class="cal-event border border-{{ a.color }} text-{{ a.color }}">{{ a.app }}: {{ a.member }}</span>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {% if not week.assignments %}<span class="text-muted" style="font-size:.7rem">—</span>{% endif %}
+  </div>
+  <div class="cal-empty-weekend"></div>
+
+  {% endfor %}
+</div>
+
+{% endblock %}

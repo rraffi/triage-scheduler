@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(xargs git:*)",
+      "Bash(git worktree:*)",
+      "Bash(mkdir -p /Users/riaz/workspace/triage-scheduler/app/services)",
+      "Bash(touch /Users/riaz/workspace/triage-scheduler/app/services/__init__.py)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(python -m pytest tests/ -v --tb=no -q)",
+      "Bash(flask schedule-preview:*)",
+      "Bash(flask schedule-week:*)",
+      "Bash(podman exec triage-postgres psql -U triage -d triage_scheduler_dev -c ':*)",
+      "Skill(commit-push)",
+      "Skill(commit-push:*)",
+      "Bash(git fetch:*)",
+      "Bash(gh pr create --title 'Phase 2: Scheduling Engine Integration' --body ':*)",
+      "Bash(gh pr:*)",
+      "Bash(git pull:*)"
+    ]
+  }
+}

@@ -1,4 +1,3 @@
-import calendar
 from datetime import date, timedelta
 
 from flask import flash, redirect, render_template, request, url_for
@@ -8,7 +7,7 @@ from app.admin.auth import admin_required
 from app.db_models import Availability, Assignment, Member, ScheduleState, Team, TriageApp
 from app.db_models.availability import AvailabilityReason
 from app.extensions import db
-from app.services.scheduler_service import run_week
+from app.services.scheduler_service import build_calendar, run_week
 
 
 def _get_team():
@@ -288,92 +287,6 @@ def availability_delete(block_id):
 APP_COLORS = ["primary", "success", "warning", "danger", "info", "secondary"]
 
 
-def _build_calendar(team, year, month):
-    """Return list of week dicts for the calendar view covering the given month."""
-    from app.services.scheduler_service import (
-        _load_domain_objects,
-        _orm_state_to_domain,
-    )
-    from src.scheduler import build_initial_state, compute_week as _compute_week
-
-    # Find all Mondays that overlap the month
-    first_day = date(year, month, 1)
-    last_day = date(year, month, calendar.monthrange(year, month)[1])
-    # Start from the Monday of the first week
-    start_monday = first_day - timedelta(days=first_day.weekday())
-    # End on the Monday of the last week
-    end_monday = last_day - timedelta(days=last_day.weekday())
-
-    mondays = []
-    d = start_monday
-    while d <= end_monday:
-        mondays.append(d)
-        d += timedelta(weeks=1)
-
-    # Load persisted assignments for this date range
-    persisted = {}
-    if team:
-        rows = (
-            Assignment.query
-            .filter(
-                Assignment.team_id == team.id,
-                Assignment.week >= start_monday,
-                Assignment.week <= end_monday,
-            )
-            .all()
-        )
-        for a in rows:
-            persisted.setdefault(a.week, []).append({
-                "member": a.member.name,
-                "app": a.triage_app.name,
-                "app_index": a.triage_app.sort_order,
-                "sub": a.is_substitute,
-            })
-
-    # Build preview state starting from first unscheduled Monday
-    today = date.today()
-    future_mondays = [m for m in mondays if m not in persisted and m >= today]
-
-    preview = {}
-    if team and future_mondays:
-        try:
-            first_future = future_mondays[0]
-            domain_members, domain_apps, _, _ = _load_domain_objects(team, first_future)
-            orm_state = team.schedule_state
-            domain_state = (
-                _orm_state_to_domain(orm_state, domain_members, domain_apps)
-                if orm_state else build_initial_state(domain_members, domain_apps)
-            )
-            # Build app_index lookup
-            app_index = {a.name: i for i, a in enumerate(sorted(team.apps, key=lambda x: x.sort_order))}
-            for monday in future_mondays:
-                dm, da, _, _ = _load_domain_objects(team, monday)
-                domain_state.members = dm
-                domain_state.apps = da
-                week_assignments = _compute_week(domain_state)
-                preview[monday] = [
-                    {
-                        "member": a.member.name,
-                        "app": a.app.name,
-                        "app_index": app_index.get(a.app.name, 0),
-                        "sub": a.is_substitute,
-                    }
-                    for a in week_assignments
-                ]
-        except Exception:
-            pass
-
-    weeks = []
-    for monday in mondays:
-        in_month = monday.month == month or (monday + timedelta(days=6)).month == month
-        weeks.append({
-            "monday": monday,
-            "in_month": in_month,
-            "persisted": monday in persisted,
-            "assignments": persisted.get(monday) or preview.get(monday) or [],
-        })
-
-    return weeks
 
 
 def _delete_week(team, target_week):
@@ -476,9 +389,10 @@ def schedule():
 
         return redirect(url_for("admin.schedule", year=year, month=month))
 
-    weeks = _build_calendar(team, year, month)
+    weeks = build_calendar(team, year, month)
 
     # Prev / next month
+    import calendar
     prev_month = date(year, month, 1) - timedelta(days=1)
     next_month = date(year, month, calendar.monthrange(year, month)[1]) + timedelta(days=1)
 
