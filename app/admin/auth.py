@@ -21,7 +21,7 @@ def login():
     if request.method == "POST":
         if request.form.get("password") == current_app.config["ADMIN_PASSWORD"]:
             session["is_admin"] = True
-            next_url = request.args.get("next") or url_for("admin.roster")
+            next_url = request.args.get("next") or url_for("admin.schedule")
             return redirect(next_url)
         error = "Invalid password."
     return render_template("admin/login.html", error=error)

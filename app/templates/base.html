@@ -9,10 +9,12 @@
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
     <div class="container">
-      <a class="navbar-brand" href="{{ url_for('main.index') }}">Triage Scheduler</a>
+      <a class="navbar-brand" href="{{ url_for('main.index') }}">
+        Triage Scheduler
+        {% if session.get('is_admin') %}<span class="badge bg-warning text-dark ms-2" style="font-size:.6rem;vertical-align:middle">admin</span>{% endif %}
+      </a>
       {% if session.get('is_admin') %}
       <div class="navbar-nav ms-3">
-        <span class="navbar-text text-secondary small me-3">manage</span>
         <a class="nav-link {% if request.endpoint == 'admin.schedule' %}active{% endif %}"
            href="{{ url_for('admin.schedule') }}">Schedule</a>
         <a class="nav-link {% if request.endpoint == 'admin.availability' %}active{% endif %}"
