@@ -102,6 +102,23 @@ class TestRoster:
         with app.app_context():
             assert _db.session.get(Member, alice_id).is_active is False
 
+    def test_reorder_blocked_when_assignments_exist(self, auth_client, seeded, app):
+        with app.app_context():
+            team = Team.query.filter_by(name="Platform Team").first()
+            charlie = Member.query.filter_by(name="Charlie").first()
+            alice = Member.query.filter_by(name="Alice").first()
+            app_a = TriageApp.query.filter_by(name="App A").first()
+            _db.session.add(Assignment(
+                member_id=alice.id, app_id=app_a.id,
+                team_id=team.id, week=MONDAY, is_substitute=False,
+            ))
+            _db.session.commit()
+            charlie_id = charlie.id
+        r = auth_client.post(f"/manage/roster/{charlie_id}/reorder",
+                             data={"rotation_order": 0},
+                             follow_redirects=True)
+        assert b"Delete all scheduled weeks" in r.data
+
     def test_reorder_conflict_rejected(self, auth_client, seeded, app):
         with app.app_context():
             charlie = Member.query.filter_by(name="Charlie").first()

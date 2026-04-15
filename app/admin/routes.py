@@ -106,6 +106,13 @@ def roster_reorder(member_id):
         flash("Invalid rotation order.", "danger")
         return redirect(url_for("admin.roster"))
 
+    if Assignment.query.filter_by(team_id=team.id).first():
+        flash(
+            "Cannot reorder while assignments exist. Delete all scheduled weeks first.",
+            "danger",
+        )
+        return redirect(url_for("admin.roster"))
+
     conflict = next(
         (m for m in team.members if m.rotation_order == new_order and m.id != member_id),
         None,

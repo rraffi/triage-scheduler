@@ -108,7 +108,7 @@ def run_week(team_id: str, target_week: date, dry_run: bool = False) -> list:
     )
 
     orm_state = team.schedule_state
-    if orm_state is None:
+    if orm_state is None or not orm_state.pointer_positions:
         domain_state = build_initial_state(domain_members, domain_apps)
     else:
         domain_state = _orm_state_to_domain(orm_state, domain_members, domain_apps)
@@ -202,7 +202,7 @@ def build_calendar(team, year: int, month: int) -> list[dict]:
             orm_state = team.schedule_state
             domain_state = (
                 _orm_state_to_domain(orm_state, dm, da)
-                if orm_state else build_initial_state(dm, da)
+                if orm_state and orm_state.pointer_positions else build_initial_state(dm, da)
             )
             for monday in future_mondays:
                 dm, da, _, _ = _load_domain_objects(team, monday)
