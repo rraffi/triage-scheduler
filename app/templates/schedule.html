@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Triage Schedule{% endblock %}
+{% block content %}
+
+<style>
+  /* ── Typography scale ───────────────────────────────────────────────
+     --cal-label : 0.75rem  — header day names, pill text  (secondary)
+     --cal-date  : 0.875rem — date numbers                 (primary)
+  ── ──────────────────────────────────────────────────────────────── */
+  :root {
+    --cal-label: 0.75rem;
+    --cal-date:  0.875rem;
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-left: 1px solid #dee2e6;
+    border-top: 1px solid #dee2e6;
+  }
+  .cal-header-cell {
+    background: #343a40;
+    color: #fff;
+    text-align: center;
+    padding: 6px 4px;
+    font-size: var(--cal-label);
+    font-weight: 600;
+    border-right: 1px solid #4a5058;
+    border-bottom: 1px solid #4a5058;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .cal-week {
+    grid-column: 1 / -1;
+    position: relative;
+  }
+  .cal-week-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+  .cal-day {
+    min-height: 96px;
+    padding: 6px 8px 44px;
+    border-right: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+    background: #fff;
+  }
+  .cal-day.out-of-month { background: #f8f9fa; }
+  .cal-day.today-col    { background: #eef4ff; }
+  .cal-day-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    font-size: var(--cal-date);
+    font-weight: 500;
+  }
+  .cal-day-num.today-num {
+    background: #0d6efd;
+    color: #fff;
+    border-radius: 50%;
+  }
+  .cal-day-num.out-of-month-num { color: #adb5bd; }
+
+  .cal-events {
+    position: absolute;
+    bottom: 8px;
+    left: 3px;
+    width: calc(5 / 7 * 100% - 6px);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    pointer-events: none;
+  }
+  .cal-event {
+    display: block;
+    font-size: var(--cal-label);
+    padding: 2px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: auto;
+  }
+</style>
+
+{# ── Hero: current week ─────────────────────────────────────────────── #}
+{% if hero %}
+<div class="card mb-4 border-0 shadow-sm">
+  <div class="card-body py-3">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div>
+        <span class="text-muted small text-uppercase fw-semibold">This week</span>
+        <div class="fw-bold">{{ hero.monday.strftime("%d %b %Y") }}</div>
+        {% if not hero.persisted %}
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size:.65rem">preview</span>
+        {% endif %}
+      </div>
+      <div class="vr d-none d-sm-block"></div>
+      {% for a in hero.assignments %}
+      <div class="d-flex align-items-center gap-2">
+        {% if a.sub %}
+        <span class="badge rounded-pill bg-warning text-dark">{{ a.app }}</span>
+        {% else %}
+        <span class="badge rounded-pill bg-{{ a.color }}">{{ a.app }}</span>
+        {% endif %}
+        <span class="fw-semibold">{{ a.member }}</span>
+        <a href="mailto:{{ a.member_email }}" class="text-muted small text-decoration-none">{{ a.member_email }}</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Month navigation ────────────────────────────────────────────────── #}
+<div class="d-flex align-items-center gap-3 mb-3">
+  <a href="{{ url_for('main.index', year=prev_month.year, month=prev_month.month) }}"
+     class="btn btn-outline-secondary btn-sm">&#8592; {{ prev_month.strftime("%b") }}</a>
+  <h4 class="mb-0">{{ month_name }}</h4>
+  <a href="{{ url_for('main.index', year=next_month.year, month=next_month.month) }}"
+     class="btn btn-outline-secondary btn-sm">{{ next_month.strftime("%b") }} &#8594;</a>
+</div>
+
+{# ── App legend ──────────────────────────────────────────────────────── #}
+<div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+  {% for app_name, color in app_colors.items() %}
+  <span class="badge rounded-pill bg-{{ color }}">{{ app_name }}</span>
+  {% endfor %}
+  <span class="badge rounded-pill bg-warning text-dark">substitute</span>
+  <span class="cal-event border border-secondary text-secondary">preview</span>
+</div>
+
+{# ── Calendar grid ───────────────────────────────────────────────────── #}
+<div class="cal-grid">
+
+  {# Header row #}
+  {% for day_name in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] %}
+  <div class="cal-header-cell">{{ day_name }}</div>
+  {% endfor %}
+
+  {% for week in weeks %}
+  <div class="cal-week">
+
+    {# Inner 7-column day grid #}
+    <div class="cal-week-days">
+      {% for day in week.days %}
+      {% set is_today = (day == today) %}
+      {% set in_month = (day.month == month) %}
+      <div class="cal-day {% if not in_month %}out-of-month{% elif is_today %}today-col{% endif %}">
+        <span class="cal-day-num {% if is_today %}today-num{% elif not in_month %}out-of-month-num{% endif %}">
+          {{ day.day }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+
+    {# Event pills: absolute overlay spanning Mon–Fri #}
+    {% if week.assignments %}
+    <div class="cal-events">
+      {% for a in week.assignments %}
+        {% if week.persisted %}
+          {% if a.sub %}
+          <span class="cal-event bg-warning text-dark">{{ a.app }}: {{ a.member }}</span>
+          {% else %}
+          <span class="cal-event bg-{{ a.color }} text-white">{{ a.app }}: {{ a.member }}</span>
+          {% endif %}
+        {% else %}
+          {% if a.sub %}
+          <span class="cal-event border border-warning text-warning" style="background:rgba(255,255,255,.85)">{{ a.app }}: {{ a.member }}</span>
+          {% else %}
+          <span class="cal-event border border-{{ a.color }} text-{{ a.color }}" style="background:rgba(255,255,255,.85)">{{ a.app }}: {{ a.member }}</span>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}
